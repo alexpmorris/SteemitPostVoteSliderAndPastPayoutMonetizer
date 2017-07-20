@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steemit Post Vote Slider and Past Payout Monetizer
 // @namespace    https://steemit.com/@alexpmorris
-// @version      0.10
+// @version      0.1
 // @description  enables slider for steemians with at least 72SP, and allows monetizing posts after 7 days via comments!
 // @author       @alexpmorris
 // @source       https://github.com/alexpmorris/SteemitPostVoteSliderAndPastPayoutMonetizer
@@ -25,6 +25,7 @@
     'use strict';
 
     var minVests = 150000;  // approximately 72 SP
+    var postCutOffDays = 6.25;  // 6.5 seems too close to 12hr "window"???
     var currentPostAgeInDays = 0;
     var altCommentElem = null;
     var altCommentProps = null;
@@ -128,9 +129,9 @@
            var state = FindReact(this).state;
            var props = FindReact(this).props;
            if ((altCommentState === null) && ((state.myVote === null) || (state.myVote === 0)) &&
-               (props.author === postAuthor) && (currentPostAgeInDays > 6.49)) {
+               (props.author === postAuthor) && (currentPostAgeInDays > postCutOffDays)) {
                var postDays = (new Date() - new Date(props.post_obj._root.nodes[8].nodes[2].entry[1])) / 86400000;
-               if (postDays < 6.49) {
+               if (postDays < postCutOffDays) {
                    altCommentElem = this;
                    altCommentState = state;
                    altCommentProps = props;
@@ -148,7 +149,7 @@
             return false;
         });
 
-        if ((currentPostAgeInDays > 6.49) && (altCommentState === null)) {
+        if ((currentPostAgeInDays > postCutOffDays) && (altCommentState === null)) {
             if ((tickCountTm-lastVoteTm > 2500) && (tickCountTm-lastNotifyTm > 2500)) {
                 lastNotifyTm = new Date().getTime();
                 console.log("SteemitPostVote: POST EXPIRED, no alternate targets found");
@@ -218,7 +219,7 @@
           if (altPostMode) {
               var scrollPos = $(altCommentElem).offset().top - ($(window).height()/2);
               var postOverlayElem = $("#post_overlay");
-              if (postOverlayElem === null) $('html,body').animate( {scrollTop: scrollPos } ); else
+              if ($(postOverlayElem).length === 0) $('html,body').animate( {scrollTop: scrollPos } ); else
                   $(postOverlayElem).animate( {scrollTop: scrollPos } );
               $(altCommentElem).notify("UpVoted a Comment at "+pctVote+"%",{position:"top",className:"success"});
               $.notify("PostExpired: UpVoted a Comment at "+pctVote+"%",{globalPosition:"top left",className:"success"}); 
