@@ -1,7 +1,10 @@
 # Steemit Post Vote Slider and Past Payout Monetizer
 *TamperMonkey Script*
 
-Enables STEEMIT.com slider for steemians with at least 72SP, and allows monetizing posts after 7 days via comments!
+Enables STEEMIT.com slider for steemians with at least 72SP, and allows monetizing posts after 7 days, and on posts designated as "Payout Declined" as well, by **upvoting a recent comment** by the author instead!
+
+For more information on this script, please refer to the following post:
+https://steemit.com/steemit/@alexpmorris/ultimate-steemit-post-vote-slider-and-past-payout-monetizer-and-next-here-comes-steemtube
 
 *If you are using this script in conjunction with the "Hide Resteems" script...*
 
