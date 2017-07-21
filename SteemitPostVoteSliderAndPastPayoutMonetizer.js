@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steemit Post Vote Slider and Past Payout Monetizer
 // @namespace    https://steemit.com/@alexpmorris
-// @version      0.10
+// @version      0.11
 // @description  enables slider for steemians with at least 72SP, and allows monetizing posts after 7 days via comments!
 // @author       @alexpmorris
 // @source       https://github.com/alexpmorris/SteemitPostVoteSliderAndPastPayoutMonetizer
@@ -102,15 +102,16 @@
            var props = FindReact(this).props;
            postAuthor = props.author;
            if (currentPostAgeInDays === 0) {
-               var postDays = (new Date() - new Date(props.post_obj._root.nodes[8].nodes[2].entry[1])) / 86400000;
-               if (postDays > 0) currentPostAgeInDays = postDays;
+               if (props.post_obj._root.nodes[3].nodes[1].entry[1] == "0.000 SBD") currentPostAgeInDays = -1; else {
+                   var postDays = (new Date() - new Date(props.post_obj._root.nodes[8].nodes[2].entry[1])) / 86400000;
+                   if (postDays > 0) currentPostAgeInDays = postDays;
+               }
            }
         } );
 
         if (postAuthor === "") {
             $(".PostSummary__content .Voting__button-up a").on("click",function(e) {
-                handle_vote_click(e, this);
-                return false;
+                return handle_vote_click(e, this);
             });
             console.log("SteemitPostVote: processNewPage [postSummary]");
             return;
@@ -119,8 +120,7 @@
 
         $(".PostFull .Voting__button-up a").on("click",function(e) {
             if (altCommentState !== null) altPostMode = true; else altPostMode = false;
-            handle_vote_click(e, this);
-            return false;
+            return handle_vote_click(e, this);
         });
 
         var tickCountTm = new Date().getTime();
@@ -128,8 +128,10 @@
         $("#comments .Voting__button-up").each( function() {
            var state = FindReact(this).state;
            var props = FindReact(this).props;
+           var isDeclinedPayout = (currentPostAgeInDays < 0) && (props.post_obj._root.nodes[3].nodes[1].entry[1] != "0.000 SBD");
+           var isExpiredPayout = (currentPostAgeInDays > postCutOffDays);
            if ((altCommentState === null) && ((state.myVote === null) || (state.myVote === 0)) &&
-               (props.author === postAuthor) && (currentPostAgeInDays > postCutOffDays)) {
+               (props.author === postAuthor) && (isExpiredPayout || isDeclinedPayout) ) {
                var postDays = (new Date() - new Date(props.post_obj._root.nodes[8].nodes[2].entry[1])) / 86400000;
                if (postDays < postCutOffDays) {
                    altCommentElem = this;
@@ -137,16 +139,18 @@
                    altCommentProps = props;
                    if ((tickCountTm-lastVoteTm > 2500) && (tickCountTm-lastNotifyTm > 2500)) {
                        lastNotifyTm = new Date().getTime();
-                       console.log("SteemitPostVote: POST EXPIRED, alternate comment target found!");
-                       $.notify("PostExpired: Found Comment to UpVote Instead!",{globalPosition:"top left",className:"info"});
+                       var alertType = "";
+                       if (isExpiredPayout) alertType = "POST EXPIRED"; else alertType = "DECLINED PAYOUT";
+                       console.log("SteemitPostVote: "+alertType+", alternate comment target found!");
+                       if (isExpiredPayout) alertType = "PostExpired"; else alertType = "PostDeniedPayout";
+                       $.notify(alertType+": Found Comment to UpVote Instead!",{globalPosition:"top left",className:"info"});
                    }
                }
            }
         } );
         $("#comments .Voting__button-up a").on("click",function(e) {
             altPostMode = false;
-            handle_vote_click(e, this);
-            return false;
+            return handle_vote_click(e, this);
         });
 
         if ((currentPostAgeInDays > postCutOffDays) && (altCommentState === null)) {
@@ -164,7 +168,7 @@
       var state = FindReact(obj).state;
       var props = FindReact(obj).props;
 
-      if (props.net_vesting_shares < minVests) return;
+      if (props.net_vesting_shares < minVests) return true;
 
       e.stopPropagation();
       window.reactProps = props;
@@ -204,13 +208,15 @@
           e.stopPropagation();
           var pctVote = Math.round(localStorage.getItem('steemitVoteWeight')/100);
           var useProps = reactProps;
+          var alertType = "";
           if (altPostMode) {
               useProps = altCommentProps;
               altCommentState.showWeight = true;
               useProps.username = reactProps.username;
               useProps.loggedin = reactProps.loggedin;
               useProps.post_obj = reactProps.post_obj;
-              console.log("SteemitPostVote: Perform ExpiredPost UpVote ["+pctVote+"%]");
+              if (currentPostAgeInDays < 0) alertType = "ExpiredPost"; else alertType = "DeniedPayout";
+              console.log("SteemitPostVote: Perform "+alertType+" UpVote ["+pctVote+"%]");
           } else console.log("SteemitPostVote: Perform UpVote ["+pctVote+"%]");
           var sliderParent = $("#tmpVoteSlider").parent();
           $("#tmpVoteSlider").remove();
@@ -222,7 +228,8 @@
               if ($(postOverlayElem).length === 0) $('html,body').animate( {scrollTop: scrollPos } ); else
                   $(postOverlayElem).animate( {scrollTop: scrollPos } );
               $(altCommentElem).notify("UpVoted a Comment at "+pctVote+"%",{position:"top",className:"success"});
-              $.notify("PostExpired: UpVoted a Comment at "+pctVote+"%",{globalPosition:"top left",className:"success"}); 
+              if (currentPostAgeInDays < 0) alertType = "PostExpired"; else alertType = "PostDeniedPayout";
+              $.notify(alertType+": UpVoted a Comment at "+pctVote+"%",{globalPosition:"top left",className:"success"}); 
           } else $(sliderParent).notify("UpVoted at "+pctVote+"%",{position:"top",className:"success"});
           triggerRefresh();
           return false;
@@ -268,7 +275,9 @@
               localStorage.setItem('steemitVoteWeight',Math.round(ui.position.left*55.55555555555555556));
           }
       });
-
+      
+      return false;
+      
   }
 
 })();
