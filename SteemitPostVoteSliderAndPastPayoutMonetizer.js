@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steemit Post Vote Slider and Past Payout Monetizer
 // @namespace    https://steemit.com/@alexpmorris
-// @version      0.11
+// @version      0.12
 // @description  enables slider for steemians with at least 72SP, and allows monetizing posts after 7 days via comments!
 // @author       @alexpmorris
 // @source       https://github.com/alexpmorris/SteemitPostVoteSliderAndPastPayoutMonetizer
@@ -142,7 +142,7 @@
                        var alertType = "";
                        if (isExpiredPayout) alertType = "POST EXPIRED"; else alertType = "DECLINED PAYOUT";
                        console.log("SteemitPostVote: "+alertType+", alternate comment target found!");
-                       if (isExpiredPayout) alertType = "PostExpired"; else alertType = "PostDeniedPayout";
+                       if (isExpiredPayout) alertType = "PostExpired"; else alertType = "PostDeclinedPayout";
                        $.notify(alertType+": Found Comment to UpVote Instead!",{globalPosition:"top left",className:"info"});
                    }
                }
@@ -215,7 +215,7 @@
               useProps.username = reactProps.username;
               useProps.loggedin = reactProps.loggedin;
               useProps.post_obj = reactProps.post_obj;
-              if (currentPostAgeInDays < 0) alertType = "ExpiredPost"; else alertType = "DeniedPayout";
+              if (currentPostAgeInDays > 0) alertType = "ExpiredPost"; else alertType = "DeclinedPayout";
               console.log("SteemitPostVote: Perform "+alertType+" UpVote ["+pctVote+"%]");
           } else console.log("SteemitPostVote: Perform UpVote ["+pctVote+"%]");
           var sliderParent = $("#tmpVoteSlider").parent();
@@ -228,7 +228,7 @@
               if ($(postOverlayElem).length === 0) $('html,body').animate( {scrollTop: scrollPos } ); else
                   $(postOverlayElem).animate( {scrollTop: scrollPos } );
               $(altCommentElem).notify("UpVoted a Comment at "+pctVote+"%",{position:"top",className:"success"});
-              if (currentPostAgeInDays < 0) alertType = "PostExpired"; else alertType = "PostDeniedPayout";
+              if (currentPostAgeInDays > 0) alertType = "PostExpired"; else alertType = "PostDeclinedPayout";
               $.notify(alertType+": UpVoted a Comment at "+pctVote+"%",{globalPosition:"top left",className:"success"}); 
           } else $(sliderParent).notify("UpVoted at "+pctVote+"%",{position:"top",className:"success"});
           triggerRefresh();
