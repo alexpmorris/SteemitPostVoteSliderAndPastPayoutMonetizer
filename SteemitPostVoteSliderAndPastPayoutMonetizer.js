@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steemit Post Vote Slider and Past Payout Monetizer
 // @namespace    https://steemit.com/@alexpmorris
-// @version      0.12
+// @version      0.13
 // @description  enables slider for steemians with at least 72SP, and allows monetizing posts after 7 days via comments!
 // @author       @alexpmorris
 // @source       https://github.com/alexpmorris/SteemitPostVoteSliderAndPastPayoutMonetizer
@@ -178,9 +178,12 @@
 
       //unvote
       if ((state.myVote !== null) && (state.myVote !== 0)) {
+          //if alternate comment exists, scroll there instead
           if (altPostMode) {
               var scrollPos = $(altCommentElem).offset().top - ($(window).height()/2);
-              $('html,body').animate( {scrollTop: scrollPos } );
+              var postOverlayElem = $("#post_overlay");
+              if ($(postOverlayElem).length === 0) $('html,body').animate( {scrollTop: scrollPos } ); else
+                  $(postOverlayElem).animate( {scrollTop: scrollPos } );
               return false;
           }
           props.myVote = state.myVote;
