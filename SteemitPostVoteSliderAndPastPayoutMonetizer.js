@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steemit Post Vote Slider and Past Payout Monetizer
 // @namespace    https://steemit.com/@alexpmorris
-// @version      0.13
+// @version      0.14
 // @description  enables slider for steemians with at least 72SP, and allows monetizing posts after 7 days via comments!
 // @author       @alexpmorris
 // @source       https://github.com/alexpmorris/SteemitPostVoteSliderAndPastPayoutMonetizer
@@ -10,6 +10,7 @@
 // @require https://code.jquery.com/jquery-1.12.4.min.js
 // @require https://code.jquery.com/ui/1.12.1/jquery-ui.min.js
 // @require https://cdnjs.cloudflare.com/ajax/libs/notify/0.4.2/notify.min.js
+// @require https://cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.0/jquery.scrollTo.min.js
 // @require https://greasyfork.org/scripts/6250-waitforkeyelements/code/waitForKeyElements.js?version=23756
 // ==/UserScript==
 
@@ -37,6 +38,7 @@
     var totPosts = 0;
     var lastVoteTm = 0;
     var lastNotifyTm = 0;
+    var lastChkTm = 0;
 
     window.FindReact = function(dom) {
         for (var key in dom) {
@@ -60,6 +62,11 @@
     function urlCheckFunction() {
         if (lastPathStr !== location.pathname || lastQueryStr !== location.search ||
             lastPathStr === null || lastQueryStr === null) {
+            var tickCountTm = new Date().getTime();
+            if ((lastChkTm === 0) || (tickCountTm-lastChkTm < 750)) {  // allows a bit more time for AJAX responses to update DOM
+                if (lastChkTm === 0) lastChkTm = tickCountTm;
+                return;
+            } else lastChkTm = 0;
             lastPathStr = location.pathname;
             lastQueryStr = location.search;
             updatePostVoteButtons();
@@ -180,10 +187,9 @@
       if ((state.myVote !== null) && (state.myVote !== 0)) {
           //if alternate comment exists, scroll there instead
           if (altPostMode) {
-              var scrollPos = $(altCommentElem).offset().top - ($(window).height()/2);
               var postOverlayElem = $("#post_overlay");
-              if ($(postOverlayElem).length === 0) $('html,body').animate( {scrollTop: scrollPos } ); else
-                  $(postOverlayElem).animate( {scrollTop: scrollPos } );
+              if ($(postOverlayElem).length === 0) $('html,body').scrollTo($(altCommentElem),100,{offset:-150}); else
+                  $(postOverlayElem).scrollTo($(altCommentElem),100,{offset:-75});
               return false;
           }
           props.myVote = state.myVote;
@@ -226,10 +232,9 @@
           useProps.vote(pctVote*100,useProps);
           lastVoteTm = new Date().getTime();
           if (altPostMode) {
-              var scrollPos = $(altCommentElem).offset().top - ($(window).height()/2);
               var postOverlayElem = $("#post_overlay");
-              if ($(postOverlayElem).length === 0) $('html,body').animate( {scrollTop: scrollPos } ); else
-                  $(postOverlayElem).animate( {scrollTop: scrollPos } );
+              if ($(postOverlayElem).length === 0) $('html,body').scrollTo($(altCommentElem),100,{offset:-150}); else
+                  $(postOverlayElem).scrollTo($(altCommentElem),100,{offset:-75});
               $(altCommentElem).notify("UpVoted a Comment at "+pctVote+"%",{position:"top",className:"success"});
               if (currentPostAgeInDays > 0) alertType = "PostExpired"; else alertType = "PostDeclinedPayout";
               $.notify(alertType+": UpVoted a Comment at "+pctVote+"%",{globalPosition:"top left",className:"success"}); 
