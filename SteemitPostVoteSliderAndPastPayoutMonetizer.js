@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         Steemit Post Vote Slider and Past Payout Monetizer
 // @namespace    https://steemit.com/@alexpmorris
-// @version      0.14
+// @version      0.15
 // @description  enables slider for steemians with at least 72SP, and allows monetizing posts after 7 days via comments!
 // @author       @alexpmorris
 // @source       https://github.com/alexpmorris/SteemitPostVoteSliderAndPastPayoutMonetizer
 // @match        https://steemit.com/*
+// @match        https://hotroast.net/*
 // @grant        none
 // @require https://code.jquery.com/jquery-1.12.4.min.js
 // @require https://code.jquery.com/ui/1.12.1/jquery-ui.min.js
@@ -117,7 +118,7 @@
         } );
 
         if (postAuthor === "") {
-            $(".PostSummary__content .Voting__button-up a").on("click",function(e) {
+            $(".PostsList__summaries .Voting__button-up a").on("click",function(e) {
                 return handle_vote_click(e, this);
             });
             console.log("SteemitPostVote: processNewPage [postSummary]");
@@ -132,7 +133,7 @@
 
         var tickCountTm = new Date().getTime();
 
-        $("#comments .Voting__button-up").each( function() {
+        $(".Post_comments .Voting__button-up").each( function() {
            var state = FindReact(this).state;
            var props = FindReact(this).props;
            var isDeclinedPayout = (currentPostAgeInDays < 0) && (props.post_obj._root.nodes[3].nodes[1].entry[1] != "0.000 SBD");
@@ -155,7 +156,7 @@
                }
            }
         } );
-        $("#comments .Voting__button-up a").on("click",function(e) {
+        $(".Post_comments .Voting__button-up a").on("click",function(e) {
             altPostMode = false;
             return handle_vote_click(e, this);
         });
