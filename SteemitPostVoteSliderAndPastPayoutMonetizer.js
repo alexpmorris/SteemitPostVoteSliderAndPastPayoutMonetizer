@@ -1,12 +1,11 @@
 // ==UserScript==
 // @name         Steemit Post Vote Slider and Past Payout Monetizer
 // @namespace    https://steemit.com/@alexpmorris
-// @version      0.15
+// @version      0.16
 // @description  enables slider for steemians with at least 72SP, and allows monetizing posts after 7 days via comments!
 // @author       @alexpmorris
 // @source       https://github.com/alexpmorris/SteemitPostVoteSliderAndPastPayoutMonetizer
 // @match        https://steemit.com/*
-// @match        https://hotroast.net/*
 // @grant        none
 // @require https://code.jquery.com/jquery-1.12.4.min.js
 // @require https://code.jquery.com/ui/1.12.1/jquery-ui.min.js
@@ -59,7 +58,7 @@
             lastPathStr="";
         }
     }
-    
+
     function urlCheckFunction() {
         if (lastPathStr !== location.pathname || lastQueryStr !== location.search ||
             lastPathStr === null || lastQueryStr === null) {
@@ -77,20 +76,20 @@
     var steemitURLCheckTimer = setInterval (function() { urlCheckFunction(); }, 250);
 
     waitForKeyElements ("#posts_list", domCreateHooks);
-    
-    function domCreateHooks() {   
+
+    function domCreateHooks() {
         //to capture ajax additions to feeds
         var elem = $("#posts_list").parent();
         $(elem).unbind('DOMSubtreeModified.pvs');
-        $(elem).on('DOMSubtreeModified.pvs', "div", function () { 
+        $(elem).on('DOMSubtreeModified.pvs', "div", function () {
             triggerRefresh($("#posts_list ul").length);
         });
         lastPathStr="";
     }
 
-    $(document).click(function (event) { 
+    $(document).click(function (event) {
         if (!$(event.target).parents("#tmpVoteSlider").length) {
-            $("#tmpVoteSlider").remove(); 
+            $("#tmpVoteSlider").remove();
         }
     });
 
@@ -106,7 +105,7 @@
 
         $(".Voting__button-up svg g circle").attr('fill','rgb(255,255,200)');
 
-        $(".PostFull .Voting__button-up").each( function() { 
+        $(".PostFull .Voting__button-up").each( function() {
            var props = FindReact(this).props;
            postAuthor = props.author;
            if (currentPostAgeInDays === 0) {
@@ -173,8 +172,9 @@
 
   function handle_vote_click(e, obj) {
       console.log("handle_vote_click [tryAltPostComment="+altPostMode+"]");
-      var state = FindReact(obj).state;
-      var props = FindReact(obj).props;
+      var react_obj = obj.offsetParent.offsetParent;
+      var state = FindReact(react_obj).state;
+      var props = FindReact(react_obj).props;
 
       if (props.net_vesting_shares < minVests) return true;
 
@@ -202,12 +202,12 @@
           return false;
       }
 
-      var newSlider = $('<div id="tmpVoteSlider" class="FoundationDropdown undefined dropdown-pane is-open"><div class="Voting__adjust_weight"><a href="#" class="confirm_weight" title="Upvote"><span class="Icon chevron-up-circle Icon_2x" style="display: inline-block; width: 2rem; height: 2rem;"><svg enable-background="new 0 0 33 33" version="1.1" viewBox="0 0 33 33" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g id="Chevron_Up_Circle"><circle cx="16" cy="16" r="15" stroke="#121313" fill="none"></circle><path d="M16.699,11.293c-0.384-0.38-1.044-0.381-1.429,0l-6.999,6.899c-0.394,0.391-0.394,1.024,0,1.414 c0.395,0.391,1.034,0.391,1.429,0l6.285-6.195l6.285,6.196c0.394,0.391,1.034,0.391,1.429,0c0.394-0.391,0.394-1.024,0-1.414 L16.699,11.293z" fill="#121313"></path></g></svg></span></a><div class="weight-display">0%</div><div class="rangeslider  rangeslider-horizontal"><div class="rangeslider__fill" style="width: 44px;"></div><div class="rangeslider__handle" style="left: 29px;"></div></div><button class="Voting__adjust_weight_close close-button" type="button"><span aria-hidden="true" class="">×</span></button></div></div>');
+      var newSlider = $('<div id="tmpVoteSlider" class="FoundationDropdown undefined dropdown-pane is-open"><div class="Voting__adjust_weight"><a href="#" class="confirm_weight" title="Upvote"><span class="Icon chevron-up-circle Icon_2x" style="display: inline-block; width: 2rem; height: 2rem;"><svg enable-background="new 0 0 33 33" version="1.1" viewBox="0 0 33 33" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g id="Chevron_Up_Circle"><circle cx="16" cy="16" r="15" stroke="#121313" fill="none"></circle><path d="M16.699,11.293c-0.384-0.38-1.044-0.381-1.429,0l-6.999,6.899c-0.394,0.391-0.394,1.024,0,1.414 c0.395,0.391,1.034,0.391,1.429,0l6.285-6.195l6.285,6.196c0.394,0.391,1.034,0.391,1.429,0c0.394-0.391,0.394-1.024,0-1.414 L16.699,11.293z" fill="#121313"></path></g></svg></span></a><div class="weight-display">0%</div><div class="rangeslider rangeslider-horizontal"><div class="rangeslider__fill" style="width: 44px;"></div><div class="rangeslider__handle" style="margin-left:10px;"></div></div><button class="Voting__adjust_weight_close close-button" type="button"><span aria-hidden="true" class="">×</span></button></div></div>');
       $(obj).parent().append(newSlider);
 
       if (localStorage.getItem('steemitVoteWeight') === null) localStorage.setItem('steemitVoteWeight',10000);
       var vw = Math.round(localStorage.getItem('steemitVoteWeight') / 100);
-      $('.weight-display')[0].innerHTML = vw + "%";
+      $("#tmpVoteSlider").find('.weight-display').html(vw + "%");
       vw = vw / 0.5555555555555555556;
       $(".rangeslider__handle").css({left:vw+'px'});
       $(".rangeslider__fill").width(vw+15+'px');
@@ -238,7 +238,7 @@
                   $(postOverlayElem).scrollTo($(altCommentElem),100,{offset:-75});
               $(altCommentElem).notify("UpVoted a Comment at "+pctVote+"%",{position:"top",className:"success"});
               if (currentPostAgeInDays > 0) alertType = "PostExpired"; else alertType = "PostDeclinedPayout";
-              $.notify(alertType+": UpVoted a Comment at "+pctVote+"%",{globalPosition:"top left",className:"success"}); 
+              $.notify(alertType+": UpVoted a Comment at "+pctVote+"%",{globalPosition:"top left",className:"success"});
           } else $(sliderParent).notify("UpVoted at "+pctVote+"%",{position:"top",className:"success"});
           triggerRefresh();
           return false;
@@ -251,7 +251,7 @@
           if (x > 180) x = 180;
           $(".rangeslider__fill").width(x+15+'px');
           var vw = Math.round(x*55.55555555555555556/100);
-          $('.weight-display')[0].innerHTML = vw + "%";
+          $("#tmpVoteSlider").find('.weight-display').html(vw + "%");
           vw = vw / 0.5555555555555555556;
           $(".rangeslider__handle").css({left:vw-10+'px'});
           localStorage.setItem('steemitVoteWeight',Math.round(x*55.55555555555555556));
@@ -269,11 +269,12 @@
           axis: "x",
           cursor: "move",
           drag: function( event, ui ) {
+              ui.position.top = 5;
               if (ui.position.left < 1) ui.position.left = 1;
               if (ui.position.left > 180) ui.position.left = 180;
               $(".rangeslider__fill").width(ui.position.left+15+'px');
               var vw = Math.round(ui.position.left*55.55555555555555556/100);
-              $('.weight-display')[0].innerHTML = vw + "%";
+              $("#tmpVoteSlider").find('.weight-display').html(vw + "%");
           },
           start: function(event, ui) {
               var vw = Math.round(localStorage.getItem('steemitVoteWeight') / 55.55555555555555556);
@@ -284,9 +285,9 @@
               localStorage.setItem('steemitVoteWeight',Math.round(ui.position.left*55.55555555555555556));
           }
       });
-      
+
       return false;
-      
+
   }
 
 })();
